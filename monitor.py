@@ -4,6 +4,8 @@ import psutil
 from dotenv import load_dotenv
 from email.message import EmailMessage
 import logging
+import socket
+import requests
 
 
 # Load environment variables from .env file
@@ -24,12 +26,39 @@ logging.basicConfig(level=logging.INFO, filename=log_filename,
                     filemode='a', format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-def send_email(used_percentage):
+# Function to get the public IP address
+def get_public_ip():
+    try:
+        response = requests.get('https://api.ipify.org')
+        return response.text
+    except requests.RequestException:
+        return "Unavailable"
+
+# Updated send_email function
+def send_email(used_percentage, partition, filesystem):
+    hostname = socket.gethostname()
+    public_ip = get_public_ip()
+
     msg = EmailMessage()
-    msg['Subject'] = 'Disk Space Warning'
+    msg['Subject'] = f'Disk Space Warning for {hostname}'
     msg['From'] = EMAIL_HOST_USER
     msg['To'] = EMAIL_RECEIVER
-    msg.set_content(f'Warning: Your disk space usage has reached {used_percentage}%. Please take action.')
+
+    # HTML message
+    html_message = f"""
+    <html>
+    <head></head>
+    <body>
+        <h1>Disk Space Warning</h1>
+        <p><strong>Hostname:</strong> {hostname}</p>
+        <p><strong>Public IP:</strong> {public_ip}</p>
+        <p>The device <strong>{partition}</strong> on filesystem <strong>{filesystem}</strong> has exceeded the threshold with a usage at <strong>{used_percentage}%</strong>.</p>
+        <p>Please take action to prevent any potential issues.</p>
+    </body>
+    </html>
+    """
+
+    msg.add_alternative(html_message, subtype='html')
 
     try:
         with smtplib.SMTP(EMAIL_HOST, EMAIL_PORT) as server:
@@ -39,19 +68,20 @@ def send_email(used_percentage):
             print("Email sent successfully")
     except Exception as e:
         print(f"Error sending email: {e}")
+        logging.error(f"Error sending email: {e}")
 
 def check_disk_usage():
-   for partition in psutil.disk_partitions():
+    for partition in psutil.disk_partitions():
         usage = psutil.disk_usage(partition.mountpoint)
         used_percentage = usage.percent
         if partition.device in MONITORED_DEVICES:
             if used_percentage > DISK_USAGE_THRESHOLD:
-                message = f"Device {partition.device} exceeded threshold with {used_percentage}% used."
+                message = f"Device {partition.device} on {partition.mountpoint} exceeded threshold with {used_percentage}% used."
                 print(message)
                 logging.info(message)
-                send_email(used_percentage, partition.device)
+                send_email(used_percentage, partition.device, partition.mountpoint)
             else:
-                message = f"Device {partition.device} is within threshold with {used_percentage}% used."
+                message = f"Device {partition.device} on {partition.mountpoint} is within threshold with {used_percentage}% used."
                 print(message)
                 logging.info(message)
         else:

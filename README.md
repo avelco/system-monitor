@@ -5,7 +5,7 @@ This manual guides you through the installation of the disk monitoring service o
 ## Prerequisites
 
 - Python 3
-- `psutil` and `python-dotenv` Python packages
+- `psutil`, `request` and `python-dotenv` Python packages
     ```bash
     pip install psutil python-dotenv
     ```
