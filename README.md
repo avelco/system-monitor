@@ -24,5 +24,5 @@ sudo bash install.sh
 4.  To  check if your script is running well execute the following command:
 
 ```bash
-systemctl status disk_monitor.timer
+systemctl status monitor.timer
 ```
