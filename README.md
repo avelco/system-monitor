@@ -14,7 +14,7 @@ This manual guides you through the installation of the disk monitoring service o
 
 ## Installation Steps
 
-1. Copy the `disk_monitor.py` script to the server.
+1. Copy the `monitor.py` script to the server.
 2. Ensure that the `.env` file is configured correctly and located in the same directory as your script.
 3. Run the installation script `install.sh` with root privileges:
 
