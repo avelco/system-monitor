@@ -16,12 +16,20 @@ EMAIL_HOST = os.getenv('EMAIL_HOST')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
-EMAIL_RECEIVER = os.getenv('EMAIL_RECEIVER').split(';')  # Assuming emails are separated by a semicolon
+EMAIL_SENDER = os.getenv('EMAIL_SENDER')
+EMAIL_RECEIVER = os.getenv('EMAIL_RECEIVER').split(';')
 DISK_USAGE_THRESHOLD = int(os.getenv('DISK_USAGE_THRESHOLD', 85))
 MONITORED_DEVICES = os.getenv('MONITORED_DEVICES').split(';')
 
 # Logging
 log_filename = './logs/disk_monitor.log'
+logs_dir = './logs/'
+# Check if the logs directory exists, and if not, create it
+if not os.path.exists(logs_dir):
+    os.makedirs(logs_dir)
+
+# Now configure logging to use a log file in this directory
+log_filename = os.path.join(logs_dir, 'disk_monitor.log')
 logging.basicConfig(level=logging.INFO, filename=log_filename,
                     filemode='a', format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -41,10 +49,9 @@ def send_email(used_percentage, partition, filesystem):
 
     msg = EmailMessage()
     msg['Subject'] = f'Disk Space Warning for {hostname}'
-    msg['From'] = EMAIL_HOST_USER
+    msg['From'] = EMAIL_SENDER
     msg['To'] = EMAIL_RECEIVER
 
-    # HTML message
     html_message = f"""
     <html>
     <head></head>
